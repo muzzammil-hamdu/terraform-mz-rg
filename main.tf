@@ -27,7 +27,7 @@ subscription_id ="5d1b700e-5c37-4a48-a430-e148b56e5404"
 # Resource group
 resource "azurerm_resource_group" "rg" {
   name     = "my-winvm-rg1"
-  location = "East US"
+  location = "uk south"
 }
 
 # Virtual network
