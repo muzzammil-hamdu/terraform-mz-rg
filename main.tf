@@ -131,22 +131,8 @@ resource "azurerm_windows_virtual_machine" "vm" {
   ]
 }
 
-# WinRM Extension
-resource "azurerm_virtual_machine_extension" "winrm" {
-  name                 = "enable-winrm"
-  virtual_machine_id   = azurerm_windows_virtual_machine.vm.id
-  publisher            = "Microsoft.Compute"
-  type                 = "CustomScriptExtension"
-  type_handler_version = "1.10"
-
-  settings = jsonencode({
-    commandToExecute = "winrm quickconfig -q"
-  })
-}
-
-# Install Apps Extension (Java, Chrome, Teams)
-resource "azurerm_virtual_machine_extension" "install_apps" {
-  name                 = "install-apps"
+resource "azurerm_virtual_machine_extension" "winrm_and_apps" {
+  name                 = "winrm-and-install-apps"
   virtual_machine_id   = azurerm_windows_virtual_machine.vm.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
@@ -155,6 +141,9 @@ resource "azurerm_virtual_machine_extension" "install_apps" {
   settings = jsonencode({
     commandToExecute = <<-EOT
       powershell -ExecutionPolicy Unrestricted -Command "
+        # Enable WinRM
+        winrm quickconfig -q
+
         # Install Java
         Invoke-WebRequest -Uri 'https://download.oracle.com/java/17/latest/jdk-17_windows-x64_bin.msi' -OutFile 'C:\\Windows\\Temp\\java.msi';
         Start-Process msiexec.exe -ArgumentList '/i C:\\Windows\\Temp\\java.msi /quiet /norestart' -Wait;
@@ -171,8 +160,7 @@ resource "azurerm_virtual_machine_extension" "install_apps" {
   })
 
   depends_on = [
-    azurerm_windows_virtual_machine.vm,
-    azurerm_virtual_machine_extension.winrm
+    azurerm_windows_virtual_machine.vm
   ]
 }
 
