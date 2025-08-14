@@ -1,5 +1,9 @@
 provider "azurerm" {
   features {}
+  client_id ="52883a55-f8e4-450c-a9a2-c98920f818fc"
+  client_secret ="z1v8Q~Hv7~QBbbb9Akoew9lbauFR5b74oCOmGalC"
+  tenant_id ="66573a45-6f85-4878-bebc-e0bc24647836"
+  subscription_id ="5d1b700e-5c37-4a48-a430-e148b56e5404"
 }
 resource "azurerm_resource_group" "main" {
   name     = "my-winvm-rg"
