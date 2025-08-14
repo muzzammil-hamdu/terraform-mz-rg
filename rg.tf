@@ -1,6 +1,6 @@
 resource "azurerm_resource_group" "main" {
   name     = "my-winvm-rg"
-  location = "eastus"
+  location = "uk south"
 }
 
 resource "azurerm_virtual_network" "vnet" {
