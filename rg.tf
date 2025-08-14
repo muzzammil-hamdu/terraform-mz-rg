@@ -1,3 +1,6 @@
+provider "azurerm" {
+  features {}
+}
 resource "azurerm_resource_group" "main" {
   name     = "my-winvm-rg"
   location = "uk south"
