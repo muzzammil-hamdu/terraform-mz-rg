@@ -131,7 +131,7 @@ resource "azurerm_windows_virtual_machine" "vm" {
   ]
 }
 
-# Enable WinRM for Ansible
+# WinRM Extension
 resource "azurerm_virtual_machine_extension" "winrm" {
   name                 = "enable-winrm"
   virtual_machine_id   = azurerm_windows_virtual_machine.vm.id
@@ -139,14 +139,18 @@ resource "azurerm_virtual_machine_extension" "winrm" {
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
 
-  # Install Java, Chrome, and Teams
+  settings = jsonencode({
+    commandToExecute = "winrm quickconfig -q"
+  })
+}
+
+# Install Apps Extension (Java, Chrome, Teams)
 resource "azurerm_virtual_machine_extension" "install_apps" {
   name                 = "install-apps"
   virtual_machine_id   = azurerm_windows_virtual_machine.vm.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
-}
 
   settings = jsonencode({
     commandToExecute = <<-EOT
