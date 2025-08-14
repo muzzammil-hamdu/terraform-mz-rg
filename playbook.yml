@@ -1,8 +1,20 @@
 ---
-- name: Install Java, Teams, and Chrome on Windows VM
-  hosts: win
+- name: Install Java, Teams, and Chrome
+  hosts: all
   gather_facts: no
+  vars:
+    ansible_user: azureuser
+    ansible_password: Password@1234
+    ansible_connection: winrm
+    ansible_winrm_server_cert_validation: ignore
+
   tasks:
+    - name: Install Chocolatey
+      win_shell: |
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
     - name: Install Java
       win_chocolatey:
         name: jdk8
