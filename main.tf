@@ -128,3 +128,8 @@ resource "azurerm_virtual_machine_extension" "install_software" {
     commandToExecute = "powershell -ExecutionPolicy Unrestricted -Command \"New-Item -ItemType Directory -Path C:\\Temp -Force; Invoke-WebRequest -Uri https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.exe -OutFile C:\\Temp\\java.exe; Start-Process C:\\Temp\\java.exe -ArgumentList '/s' -Wait; Invoke-WebRequest -Uri https://go.microsoft.com/fwlink/p/?linkid=2139997 -OutFile C:\\Temp\\teams.exe; Start-Process C:\\Temp\\teams.exe -ArgumentList '/silent' -Wait; Invoke-WebRequest -Uri https://dl.google.com/chrome/install/latest/chrome_installer.exe -OutFile C:\\Temp\\chrome.exe; Start-Process C:\\Temp\\chrome.exe -ArgumentList '/silent /install' -Wait\""
   })
 }
+# Output the public IP
+output "vm_public_ip" {
+  description = "Public IP address of the Windows VM"
+  value       = azurerm_public_ip.public_ip.ip_address
+}
