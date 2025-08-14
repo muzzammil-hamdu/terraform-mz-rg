@@ -16,13 +16,19 @@ terraform {
 
 provider "azurerm" {
   features {}
+client_id ="52883a55-f8e4-450c-a9a2-c98920f818fc"
+client_secret ="z1v8Q~Hv7~QBbbb9Akoew9lbauFR5b74oCOmGalC"
+tenant_id ="66573a45-6f85-4878-bebc-e0bc24647836"
+subscription_id ="5d1b700e-5c37-4a48-a430-e148b56e5404"
 }
 
+# Resource Group
 resource "azurerm_resource_group" "rg" {
   name     = "terrarg6"
-  location = "uk south"
+  location = "East US"
 }
 
+# Virtual Network
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet-win"
   address_space       = ["10.0.0.0/16"]
@@ -30,6 +36,7 @@ resource "azurerm_virtual_network" "vnet" {
   resource_group_name = azurerm_resource_group.rg.name
 }
 
+# Subnet
 resource "azurerm_subnet" "subnet" {
   name                 = "subnet-win"
   resource_group_name  = azurerm_resource_group.rg.name
@@ -53,7 +60,7 @@ resource "azurerm_network_security_group" "nsg" {
 
   security_rule {
     name                       = "Allow-RDP"
-    priority                   = 100
+    priority                   = 1001
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
@@ -65,7 +72,7 @@ resource "azurerm_network_security_group" "nsg" {
 
   security_rule {
     name                       = "Allow-WinRM"
-    priority                   = 200
+    priority                   = 1002
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
@@ -74,6 +81,12 @@ resource "azurerm_network_security_group" "nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+}
+
+# Subnet + NSG Association
+resource "azurerm_subnet_network_security_group_association" "nsg_assoc" {
+  subnet_id                 = azurerm_subnet.subnet.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
 # NIC
@@ -88,12 +101,6 @@ resource "azurerm_network_interface" "nic" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.pip.id
   }
-}
-
-# Attach NSG to NIC
-resource "azurerm_network_interface_security_group_association" "nsg_assoc" {
-  network_interface_id      = azurerm_network_interface.nic.id
-  network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
 # Windows VM
@@ -119,7 +126,7 @@ resource "azurerm_windows_virtual_machine" "vm" {
   }
 }
 
-# Enable WinRM
+# Enable WinRM for Ansible
 resource "azurerm_virtual_machine_extension" "winrm" {
   name                 = "enable-winrm"
   virtual_machine_id   = azurerm_windows_virtual_machine.vm.id
@@ -127,19 +134,12 @@ resource "azurerm_virtual_machine_extension" "winrm" {
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
 
-  settings = <<SETTINGS
-    {
-      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \\
-      \"winrm quickconfig -q; \\
-      winrm set winrm/config/winrs @{MaxMemoryPerShellMB='512'}; \\
-      winrm set winrm/config @{MaxTimeoutms='1800000'}; \\
-      winrm set winrm/config/service @{AllowUnencrypted='true'}; \\
-      winrm set winrm/config/service/auth @{Basic='true'}; \\
-      netsh advfirewall firewall add rule name='WinRM HTTP' dir=in action=allow protocol=TCP localport=5985\""
-    }
-  SETTINGS
+  settings = jsonencode({
+    commandToExecute = "powershell -ExecutionPolicy Unrestricted -Command \"winrm quickconfig -q; winrm set winrm/config/winrs @{MaxMemoryPerShellMB='512'}; winrm set winrm/config @{MaxTimeoutms='1800000'}; winrm set winrm/config/service @{AllowUnencrypted='true'}; winrm set winrm/config/service/auth @{Basic='true'}; netsh advfirewall firewall add rule name='WinRM HTTP' dir=in action=allow protocol=TCP localport=5985\""
+  })
 }
 
+# Output Public IP
 output "vm_public_ip" {
   value = azurerm_public_ip.pip.ip_address
 }
