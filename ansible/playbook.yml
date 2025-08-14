@@ -1,0 +1,19 @@
+---
+- name: Install Java, Teams, and Chrome on Windows VM
+  hosts: win
+  gather_facts: no
+  tasks:
+    - name: Install Java
+      win_chocolatey:
+        name: jdk8
+        state: present
+
+    - name: Install Microsoft Teams
+      win_chocolatey:
+        name: microsoft-teams
+        state: present
+
+    - name: Install Google Chrome
+      win_chocolatey:
+        name: googlechrome
+        state: present
