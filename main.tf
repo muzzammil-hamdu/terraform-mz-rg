@@ -7,7 +7,6 @@ terraform {
       name = "terraform-mz-rg"
     }
   }
-}
 
   required_providers {
     azurerm = {
@@ -16,7 +15,6 @@ terraform {
     }
   }
 }
-
 provider "azurerm" {
   features {}
   client_id       = var.client_id
