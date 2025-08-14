@@ -146,6 +146,7 @@ resource "azurerm_virtual_machine_extension" "install_apps" {
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
+}
 
   settings = jsonencode({
     commandToExecute = <<-EOT
