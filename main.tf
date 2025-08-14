@@ -16,16 +16,16 @@ terraform {
 
 provider "azurerm" {
   features {}
-client_id ="52883a55-f8e4-450c-a9a2-c98920f818fc"
-client_secret ="z1v8Q~Hv7~QBbbb9Akoew9lbauFR5b74oCOmGalC"
-tenant_id ="66573a45-6f85-4878-bebc-e0bc24647836"
-subscription_id ="5d1b700e-5c37-4a48-a430-e148b56e5404"
+  client_id       = "52883a55-f8e4-450c-a9a2-c98920f818fc"
+  client_secret   = "z1v8Q~Hv7~QBbbb9Akoew9lbauFR5b74oCOmGalC"
+  tenant_id       = "66573a45-6f85-4878-bebc-e0bc24647836"
+  subscription_id = "5d1b700e-5c37-4a48-a430-e148b56e5404"
 }
 
 # Resource Group
 resource "azurerm_resource_group" "rg" {
   name     = "terrarg6"
-  location = "uk south"
+  location = "UK South"
 }
 
 # Virtual Network
@@ -44,7 +44,7 @@ resource "azurerm_subnet" "subnet" {
   address_prefixes     = ["10.0.1.0/24"]
 }
 
-# Public IP
+# Public IP (Standard SKU)
 resource "azurerm_public_ip" "pip" {
   name                = "winvm-pip"
   location            = azurerm_resource_group.rg.location
@@ -84,7 +84,7 @@ resource "azurerm_network_security_group" "nsg" {
   }
 }
 
-# Subnet + NSG Association
+# Subnet + NSG Association (ensure dependencies)
 resource "azurerm_subnet_network_security_group_association" "nsg_assoc" {
   subnet_id                 = azurerm_subnet.subnet.id
   network_security_group_id = azurerm_network_security_group.nsg.id
@@ -125,6 +125,10 @@ resource "azurerm_windows_virtual_machine" "vm" {
     sku       = "2022-Datacenter"
     version   = "latest"
   }
+
+  depends_on = [
+    azurerm_subnet_network_security_group_association.nsg_assoc
+  ]
 }
 
 # Enable WinRM for Ansible
@@ -138,6 +142,10 @@ resource "azurerm_virtual_machine_extension" "winrm" {
   settings = jsonencode({
     commandToExecute = "powershell -ExecutionPolicy Unrestricted -Command \"winrm quickconfig -q; winrm set winrm/config/winrs @{MaxMemoryPerShellMB='512'}; winrm set winrm/config @{MaxTimeoutms='1800000'}; winrm set winrm/config/service @{AllowUnencrypted='true'}; winrm set winrm/config/service/auth @{Basic='true'}; netsh advfirewall firewall add rule name='WinRM HTTP' dir=in action=allow protocol=TCP localport=5985\""
   })
+
+  depends_on = [
+    azurerm_windows_virtual_machine.vm
+  ]
 }
 
 # Output Public IP
