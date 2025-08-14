@@ -139,12 +139,35 @@ resource "azurerm_virtual_machine_extension" "winrm" {
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
 
+  # Install Java, Chrome, and Teams
+resource "azurerm_virtual_machine_extension" "install_apps" {
+  name                 = "install-apps"
+  virtual_machine_id   = azurerm_windows_virtual_machine.vm.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
   settings = jsonencode({
-    commandToExecute = "powershell -ExecutionPolicy Unrestricted -Command \"winrm quickconfig -q; winrm set winrm/config/winrs @{MaxMemoryPerShellMB='512'}; winrm set winrm/config @{MaxTimeoutms='1800000'}; winrm set winrm/config/service @{AllowUnencrypted='true'}; winrm set winrm/config/service/auth @{Basic='true'}; netsh advfirewall firewall add rule name='WinRM HTTP' dir=in action=allow protocol=TCP localport=5985\""
+    commandToExecute = <<-EOT
+      powershell -ExecutionPolicy Unrestricted -Command "
+        # Install Java
+        Invoke-WebRequest -Uri 'https://download.oracle.com/java/17/latest/jdk-17_windows-x64_bin.msi' -OutFile 'C:\\Windows\\Temp\\java.msi';
+        Start-Process msiexec.exe -ArgumentList '/i C:\\Windows\\Temp\\java.msi /quiet /norestart' -Wait;
+
+        # Install Chrome
+        Invoke-WebRequest -Uri 'https://dl.google.com/chrome/install/latest/chrome_installer.exe' -OutFile 'C:\\Windows\\Temp\\chrome_installer.exe';
+        Start-Process 'C:\\Windows\\Temp\\chrome_installer.exe' -ArgumentList '/silent /install' -Wait;
+
+        # Install Teams
+        Invoke-WebRequest -Uri 'https://statics.teams.cdn.office.net/production-windows/1.7.00.1382/Teams_windows_x64.exe' -OutFile 'C:\\Windows\\Temp\\teams.exe';
+        Start-Process 'C:\\Windows\\Temp\\teams.exe' -ArgumentList '-s' -Wait;
+      "
+    EOT
   })
 
   depends_on = [
-    azurerm_windows_virtual_machine.vm
+    azurerm_windows_virtual_machine.vm,
+    azurerm_virtual_machine_extension.winrm
   ]
 }
 
