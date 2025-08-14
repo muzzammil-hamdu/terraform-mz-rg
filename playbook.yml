@@ -1,0 +1,47 @@
+---
+- name: Install Applications on Windows VM
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Enable execution of PowerShell scripts
+      win_shell: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force
+
+    - name: Install Java
+      win_get_url:
+        url: https://download.oracle.com/java/17/latest/jdk-17_windows-x64_bin.msi
+        dest: C:\Windows\Temp\java.msi
+      register: java_download
+
+    - name: Run Java installer
+      win_package:
+        path: C:\Windows\Temp\java.msi
+        arguments: /quiet /norestart
+        state: present
+      when: java_download.changed
+
+    - name: Install Chrome
+      win_get_url:
+        url: https://dl.google.com/chrome/install/latest/chrome_installer.exe
+        dest: C:\Windows\Temp\chrome_installer.exe
+      register: chrome_download
+
+    - name: Run Chrome installer
+      win_package:
+        path: C:\Windows\Temp\chrome_installer.exe
+        arguments: /silent /install
+        state: present
+      when: chrome_download.changed
+
+    - name: Install Teams
+      win_get_url:
+        url: https://statics.teams.cdn.office.net/production-windows/1.7.00.1382/Teams_windows_x64.exe
+        dest: C:\Windows\Temp\teams.exe
+      register: teams_download
+
+    - name: Run Teams installer
+      win_package:
+        path: C:\Windows\Temp\teams.exe
+        arguments: -s
+        state: present
+      when: teams_download.changed
