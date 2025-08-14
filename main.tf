@@ -131,38 +131,23 @@ resource "azurerm_windows_virtual_machine" "vm" {
   ]
 }
 
-resource "azurerm_virtual_machine_extension" "winrm_and_apps" {
-  name                 = "winrm-and-install-apps"
+# WinRM Extension
+resource "azurerm_virtual_machine_extension" "winrm" {
+  name                 = "enable-winrm"
   virtual_machine_id   = azurerm_windows_virtual_machine.vm.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
 
   settings = jsonencode({
-    commandToExecute = <<-EOT
-      powershell -ExecutionPolicy Unrestricted -Command "
-        # Enable WinRM
-        winrm quickconfig -q
-
-        # Install Java
-        Invoke-WebRequest -Uri 'https://download.oracle.com/java/17/latest/jdk-17_windows-x64_bin.msi' -OutFile 'C:\\Windows\\Temp\\java.msi';
-        Start-Process msiexec.exe -ArgumentList '/i C:\\Windows\\Temp\\java.msi /quiet /norestart' -Wait;
-
-        # Install Chrome
-        Invoke-WebRequest -Uri 'https://dl.google.com/chrome/install/latest/chrome_installer.exe' -OutFile 'C:\\Windows\\Temp\\chrome_installer.exe';
-        Start-Process 'C:\\Windows\\Temp\\chrome_installer.exe' -ArgumentList '/silent /install' -Wait;
-
-        # Install Teams
-        Invoke-WebRequest -Uri 'https://statics.teams.cdn.office.net/production-windows/1.7.00.1382/Teams_windows_x64.exe' -OutFile 'C:\\Windows\\Temp\\teams.exe';
-        Start-Process 'C:\\Windows\\Temp\\teams.exe' -ArgumentList '-s' -Wait;
-      "
-    EOT
+    commandToExecute = "winrm quickconfig -q"
   })
 
   depends_on = [
     azurerm_windows_virtual_machine.vm
   ]
 }
+
 
 # Output Public IP
 output "vm_public_ip" {
